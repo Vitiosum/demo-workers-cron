@@ -120,7 +120,8 @@ function renderDesks(s) {
 function renderStamps(s) {
   const now = serverNow();
   const thisMinute = Math.floor(now / 60000) * 60000;
-  const minutes = Array.from({ length: 8 }, (_, i) => thisMinute - (7 - i) * 60000);
+  const count = window.innerWidth < 560 ? 5 : 8; // five minutes fit a phone
+  const minutes = Array.from({ length: count }, (_, i) => thisMinute - (count - 1 - i) * 60000);
   const stamp = (t) => `${new Date(t).toISOString().slice(0, 16)}Z`;
   const rows = new Map();
   for (const run of s.cron.runs) {
@@ -142,7 +143,7 @@ function renderStamps(s) {
         const label = run.outcome === 'printed' ? `${utc(m, false)}: printed the report (${run.source})` : `${utc(m, false)}: fired, instance ${run.holder?.instance} had the lock (${run.source})`;
         return h('td', {}, h('span', { class: `so-stamp so-stamp--${run.outcome}`, title: label, 'aria-label': label }, run.source === 'scheduler' ? h('span', { class: 'so-stamp__src' }, 'w') : null));
       })))
-    : [h('tr', {}, h('td', { colspan: 9, class: 'so-empty' }, 'No cron run yet. The first one fires at the next full minute.'))];
+    : [h('tr', {}, h('td', { colspan: count + 1, class: 'so-empty' }, 'No cron run yet. The first one fires at the next full minute.'))];
   table.replaceChildren(caption, h('thead', {}, head), h('tbody', {}, body));
 
   // One line that says what the stamps prove, from the last complete minute.
