@@ -2,6 +2,8 @@
 
 > Exports, emails, thumbnails, imports: every business app has work that must not run inside a web request. In this sorting office the web page only posts the letter to a **Redis list**. A **worker**, started by Clever Cloud next to the web server from one environment variable, takes each job with `BLMOVE`. A failed job comes back after 3 s, then 6 s; after the third failure it lands in the dead letter office. Crash a worker from the page: the platform starts it again within two seconds, and it picks up the job it was holding. Every minute, **`clevercloud/cron.json`** prints a report. Clever Cloud runs that cron on every instance, so a Redis lock (`SET NX`) makes sure only one of them prints it.
 
+![The Sorting Office, run locally with two workers and a local Redis (played at double speed): a rush of 12 jobs fills the tray, the two desks work through it and the jobs land in Delivered](docs/tour.gif)
+
 ![The sorting floor: jobs in the tray, one worker per instance, delivered jobs with one dot per attempt](docs/floor.png)
 
 ![The minute report: one stamp per instance and per minute. At 16:16 and 16:17 a deployment made old and new instances overlap: four machines fired, one report was printed](docs/cron.png)
