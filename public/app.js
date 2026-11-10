@@ -204,7 +204,11 @@ function renderPlatform(s) {
 // ---------- main render ----------
 function render(s) {
   const instances = new Set(s.workers.filter((w) => w.alive).map((w) => `${w.instance}|${w.instanceId}`));
-  $('#live-text').textContent = `Live · ${instances.size} instance${instances.size === 1 ? '' : 's'}`;
+  const live = Boolean(s.platform.APP_ID); // Clever Cloud injects APP_ID; without it this is a local run
+  $('#live-text').textContent = live ? `Live · ${instances.size} instance${instances.size === 1 ? '' : 's'}` : 'Local · not on Clever Cloud';
+  $('#live').classList.toggle('cc-pill--live', live);
+  $('#live').classList.toggle('cc-pill--muted', !live);
+  $('#live .cc-dot').classList.toggle('cc-dot--muted', !live);
   $('#waiting-count').textContent = s.waiting.count;
   $('#worker-count').textContent = s.workers.filter((w) => w.alive).length;
   $('#retry-count').textContent = s.retry.length;

@@ -56,6 +56,7 @@ before(async () => {
   base = `http://127.0.0.1:${webPort}`;
   procs.push(spawn('redis-server', ['--port', String(redisPort), '--save', '', '--appendonly', 'no'], { stdio: 'ignore' }));
   await sleep(400);
+  delete process.env.APP_ID; // the tests describe a local run
   env = { ...process.env, REDIS_URL: `redis://127.0.0.1:${redisPort}`, PORT: String(webPort), JOB_SPEED: '20', RETRY_BASE_SECONDS: '0.2', FLAKY_RATE: '0', QUEUE_PREFIX: 'test:' };
   start(['server.js']);
   await until(async () => (await api('GET', '/health').catch(() => ({}))).status === 200);
@@ -72,6 +73,17 @@ t('health answers, deep health needs a live worker', async () => {
   assert.equal((await api('GET', '/health/deep')).status, 503);
   startWorker('w-a', 0);
   await until(async () => (await api('GET', '/health/deep')).status === 200);
+});
+
+t('the header pill reads its Live or Local label from APP_ID, never from a constant', async () => {
+  assert.equal((await api('GET', '/api/state')).json.platform.APP_ID, null);
+  const port = await freePort();
+  start(['server.js'], { PORT: String(port), APP_ID: 'app_test' });
+  const onClever = await until(() => fetch(`http://127.0.0.1:${port}/api/state`).then((r) => r.json()).catch(() => null));
+  assert.equal(onClever.platform.APP_ID, 'app_test');
+  const js = (await api('GET', '/app.js')).text;
+  assert.match(js, /s\.platform\.APP_ID/);
+  assert.match(js, /live \? `Live · .*: 'Local · not on Clever Cloud'/);
 });
 
 t('the seed posts one job of each kind, and they get done', async () => {
